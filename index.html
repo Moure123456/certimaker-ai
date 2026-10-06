@@ -5,27 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CertiMaker AI</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+    button { background-color: #6b21a8; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+    #app-content { display: none; }
+  </style>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+<body>
 
-  <h1>مرحباً بك في CertiMaker AI</h1>
-  
-  <button id="btn" onclick="login()" style="padding: 12px 24px; font-size: 16px;">تسجيل الدخول عبر Pi</button>
-  
-  <p id="status"></p>
+  <!-- شاشة الدخول -->
+  <div id="login-card" class="card">
+    <h1>مرحباً بك في CertiMaker AI</h1>
+    <p>قم بتسجيل الدخول لبدء إنتاج الشهادات الذكية عبر شبكة Pi</p>
+    <button id="btn" onclick="login()">تسجيل الدخول عبر Pi</button>
+    <p id="status" style="color: #666; margin-top: 15px;"></p>
+  </div>
+
+  <!-- شاشة التطبيق الرئيسية (تظهر بعد الدخول) -->
+  <div id="app-content" class="card">
+    <h2>واجهة CertiMaker AI الرئيسية</h2>
+    <p id="welcome-msg"></p>
+    <p>أهلاً بك! يمكنك الآن البدء في تصميم وإنشاء الشهادات.</p>
+  </div>
 
   <script>
-    // تهيئة المكتبة فور تحميل الصفحة
     window.onload = function() {
       if (window.Pi) {
         try {
           window.Pi.init({ version: "2.0", sandbox: true });
-          document.getElementById('status').innerText = "جاهز لتسجيل الدخول";
         } catch(e) {
-          document.getElementById('status').innerText = "خطأ في تهيئة Pi SDK";
+          console.error(e);
         }
-      } else {
-        document.getElementById('status').innerText = "يرجى فتح الصفحة من داخل Pi Browser";
       }
     };
 
@@ -35,20 +46,21 @@
         return;
       }
 
-      document.getElementById('status').innerText = "جاري الاتصال...";
+      document.getElementById('status').innerText = "جاري الاتصال بشبكة Pi...";
 
       const scopes = ['username'];
-
-      function onIncompletePaymentFound(payment) { };
+      function onIncompletePaymentFound(payment) {};
 
       window.Pi.authenticate(scopes, onIncompletePaymentFound)
         .then(function(auth) {
-          document.getElementById('status').innerText = "تم الدخول بنجاح!";
-          alert("مرحباً بك يا " + auth.user.username);
+          // إخفاء كارت الدخول وإظهار كارت التطبيق الرئيسي
+          document.getElementById('login-card').style.display = 'none';
+          document.getElementById('app-content').style.display = 'block';
+          document.getElementById('welcome-msg').innerText = "مرحباً بك يا " + auth.user.username + " 👋";
         })
         .catch(function(error) {
           console.error(error);
-          document.getElementById('status').innerText = "حدث خطأ: " + JSON.stringify(error);
+          document.getElementById('status').innerText = "حدث خطأ أثناء الدخول.";
         });
     }
   </script>
