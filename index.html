@@ -7,22 +7,48 @@
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+
   <h1>مرحباً بك في CertiMaker AI</h1>
+  
   <button id="btn" onclick="login()" style="padding: 12px 24px; font-size: 16px;">تسجيل الدخول عبر Pi</button>
+  
   <p id="status"></p>
 
   <script>
-    const Pi = window.Pi;
-    Pi.init({ version: "2.0", sandbox: true });
+    // تهيئة المكتبة فور تحميل الصفحة
+    window.onload = function() {
+      if (window.Pi) {
+        try {
+          window.Pi.init({ version: "2.0", sandbox: true });
+          document.getElementById('status').innerText = "جاهز لتسجيل الدخول";
+        } catch(e) {
+          document.getElementById('status').innerText = "خطأ في تهيئة Pi SDK";
+        }
+      } else {
+        document.getElementById('status').innerText = "يرجى فتح الصفحة من داخل Pi Browser";
+      }
+    };
 
     function login() {
+      if (!window.Pi) {
+        alert("يرجى فتح الرابط من داخل تطبيق Pi Browser حصراً.");
+        return;
+      }
+
       document.getElementById('status').innerText = "جاري الاتصال...";
-      Pi.authenticate(['username'], function(p){})
+
+      const scopes = ['username'];
+
+      function onIncompletePaymentFound(payment) { };
+
+      window.Pi.authenticate(scopes, onIncompletePaymentFound)
         .then(function(auth) {
-          alert("تم الدخول بنجاح: " + auth.user.username);
+          document.getElementById('status').innerText = "تم الدخول بنجاح!";
+          alert("مرحباً بك يا " + auth.user.username);
         })
-        .catch(function(err) {
-          alert("حدث خطأ: " + err);
+        .catch(function(error) {
+          console.error(error);
+          document.getElementById('status').innerText = "حدث خطأ: " + JSON.stringify(error);
         });
     }
   </script>
