@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CertiMaker AI</title>
+    <!-- Pi SDK -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+</head>
+<body>
+    <h1>مرحباً بك في CertiMaker AI</h1>
+    <button onclick="login()">تسجيل الدخول عبر Pi</button>
+
+    <script>
+      const Pi = window.Pi;
+      Pi.init({ version: "2.0", sandbox: true });
+
+      function login() {
+        Pi.authenticate(['username', 'payments'], function(payment) {})
+          .then(function(auth) {
+            alert("مرحباً بك: " + auth.user.username);
+          })
+          .catch(function(error) {
+            console.error(error);
+          });
+      }
+    </script>
+</body>
+</html>
