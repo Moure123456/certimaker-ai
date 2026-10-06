@@ -4,87 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CertiMaker AI</title>
-  <!-- استدعاء مكتبة Pi SDK الرسمية -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 40px 20px;
-      background-color: #f9f9f9;
-      color: #333;
-    }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      max-width: 400px;
-      margin: auto;
-    }
-    h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    button {
-      background-color: #8a2be2;
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background-color: #7122bd;
-    }
-    #status {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #555;
-    }
-  </style>
 </head>
-<body>
-
-  <div class="card">
-    <h1>مرحباً بك في CertiMaker AI</h1>
-    <p>قم بتسجيل الدخول لبدء إنتاج الشهادات الذكية عبر شبكة Pi</p>
-    
-    <button id="loginBtn" onclick="login()">تسجيل الدخول عبر Pi</button>
-    
-    <div id="status"></div>
-  </div>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+  <h1>مرحباً بك في CertiMaker AI</h1>
+  <button id="btn" onclick="login()" style="padding: 12px 24px; font-size: 16px;">تسجيل الدخول عبر Pi</button>
+  <p id="status"></p>
 
   <script>
-    // تهيئة Pi SDK في بيئة الاختبار (Sandbox)
     const Pi = window.Pi;
     Pi.init({ version: "2.0", sandbox: true });
 
     function login() {
-      document.getElementById('status').innerText = "جاري الاتصال بشبكة Pi...";
-      
-      const scopes = ['username', 'payments'];
-
-      function onIncompletePaymentFound(payment) {
-        console.log("دفعة غير مكتملة:", payment);
-      };
-
-      Pi.authenticate(scopes, onIncompletePaymentFound)
+      document.getElementById('status').innerText = "جاري الاتصال...";
+      Pi.authenticate(['username'], function(p){})
         .then(function(auth) {
-          document.getElementById('status').innerText = "تم تسجيل الدخول بنجاح!";
-          alert("أهلاً بك يا " + auth.user.username + " في CertiMaker AI!");
+          alert("تم الدخول بنجاح: " + auth.user.username);
         })
-        .catch(function(error) {
-          console.error(error);
-          document.getElementById('status').innerText = "فشل تسجيل الدخول. تأكد من فتح الرابط من داخل Pi Browser.";
-          alert("حدث خطأ أثناء الاتصال: " + error);
+        .catch(function(err) {
+          alert("حدث خطأ: " + err);
         });
     }
   </script>
-
 </body>
 </html>
