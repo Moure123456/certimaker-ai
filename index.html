@@ -8,6 +8,9 @@
   <!-- مكتبة html2canvas لتحويل الشهادة إلى صورة PNG -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Pi Network SDK -->
+  <!-- مكتبة html2pdf لتنزيل الشهادة -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
   <style>
@@ -250,7 +253,18 @@
       // تحويل عنصر الشهادة إلى صورة باستخدام html2canvas
       html2canvas(cert, { scale: 2 }).then(canvas => {
         const imageDataUrl = canvas.toDataURL('image/png');
-        
+        // تحويل عنصر الشهادة بالكامل إلى PDF وتنزيله فوراً
+const certElement = document.getElementById('certificate-card');
+const opt = {
+  margin:       0.1,
+  filename:     'certificate.pdf',
+  image:        { type: 'jpeg', quality: 0.98 },
+  html2canvas:  { scale: 2, useCORS: true },
+  jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+};
+
+html2pdf().set(opt).from(certElement).save();
+
         // عرض الصورة داخل عنصر <img>
         const imgElement = document.getElementById('final-cert-img');
         imgElement.src = imageDataUrl;
@@ -272,3 +286,4 @@
   </script>
 </body>
 </html>
+
