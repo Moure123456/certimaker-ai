@@ -3,65 +3,271 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CertiMaker AI</title>
+  <title>CertiMaker AI - إنشاء الشهادات</title>
+  
+  <!-- مكتبة html2canvas لتحويل الشهادة إلى صورة PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Pi Network SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
-    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    button { background-color: #6b21a8; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 15px; }
-    #app-content { display: none; }
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h1 { color: #5c2d91; margin-bottom: 5px; }
+    p { color: #666; font-size: 14px; }
+
+    /* الأزرار وعناصر التحكم */
+    .controls {
+      margin: 15px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    button {
+      background-color: #5c2d91;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    button:hover { background-color: #4a2377; }
+    button.btn-blue { background-color: #1a365d; }
+    button.btn-green { background-color: #1b4332; }
+    button.btn-gold { background-color: #c59b27; }
+
+    .input-group {
+      margin-bottom: 15px;
+      text-align: right;
+    }
+
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    /* حاوية الشهادة و تأثير الدوران */
+    .cert-perspective {
+      perspective: 1000px;
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .certificate-card {
+      width: 100%;
+      aspect-ratio: 1.414 / 1; /* نسبة A4 أفقي */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.8s, background 0.3s, border 0.3s;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    /* أنماط الثيمات والأشكال */
+    .theme-gold {
+      border: 8px double #c59b27;
+      background: linear-gradient(135deg, #fffdf5 0%, #fff9e6 100%);
+      color: #333;
+    }
+    .theme-blue {
+      border: 8px double #1a365d;
+      background: linear-gradient(135deg, #f0f4f8 0%, #e1e9f0 100%);
+      color: #0f2537;
+    }
+    .theme-green {
+      border: 8px double #1b4332;
+      background: linear-gradient(135deg, #f2f8f5 0%, #e2efe8 100%);
+      color: #112d22;
+    }
+
+    /* كود انيميشن الدوران 3D */
+    @keyframes spin3D {
+      from { transform: rotateY(0deg); }
+      to { transform: rotateY(360deg); }
+    }
+
+    .spinning {
+      animation: spin3D 4s linear infinite;
+    }
+
+    .cert-title { font-size: 22px; font-weight: bold; margin-top: 10px; }
+    .cert-name { font-size: 20px; color: #d4af37; font-weight: bold; margin: 15px 0; border-bottom: 2px solid; display: inline-block; padding-bottom: 5px; }
+    .cert-body { font-size: 12px; line-height: 1.5; }
+    .cert-footer { display: flex; justify-content: space-between; font-size: 11px; margin-top: 15px; }
+
+    /* حاوية الصورة الجاهزة للحفظ بالضغط المطول */
+    #image-output-container {
+      margin-top: 20px;
+      display: none;
+      background: #eef2f5;
+      padding: 15px;
+      border-radius: 8px;
+      border: 2px dashed #5c2d91;
+    }
+
+    #image-output-container img {
+      width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .instruction-text {
+      color: #d9534f;
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- شاشة الدخول -->
-  <div id="login-card" class="card">
-    <h1>مرحباً بك في CertiMaker AI</h1>
-    <p>قم بتسجيل الدخول لبدء إنتاج الشهادات الذكية عبر شبكة Pi</p>
-    <button id="btn" onclick="login()">تسجيل الدخول عبر Pi</button>
-    <p id="status" style="color: #666; margin-top: 15px;"></p>
-  </div>
+  <div class="container">
+    <h1>CertiMaker AI</h1>
+    <p id="status">جاري الاتصال بشبكة Pi...</p>
 
-  <!-- شاشة التطبيق الرئيسية (تظهر بعد الدخول) -->
-  <div id="app-content" class="card">
-    <h2>واجهة CertiMaker AI الرئيسية</h2>
-    <p id="welcome-msg"></p>
-    <p>أهلاً بك! يمكنك الآن البدء في تصميم وإنشاء الشهادات.</p>
+    <!-- مدخلات الاسم -->
+    <div class="input-group">
+      <label>اسم المكرّم:</label>
+      <input type="text" id="recipient-name" value="محمود السويدي" oninput="updateName()">
+    </div>
+
+    <!-- أدوات اختيار الألوان والدوران -->
+    <div class="controls">
+      <button class="btn-gold" onclick="setTheme('theme-gold')">ثيم ذهبي</button>
+      <button class="btn-blue" onclick="setTheme('theme-blue')">ثيم أزرق</button>
+      <button class="btn-green" onclick="setTheme('theme-green')">ثيم أخضر</button>
+      <button onclick="toggleSpin()">دوران 3D 🔄</button>
+    </div>
+
+    <!-- عرض الشهادة التفاعلية -->
+    <div class="cert-perspective">
+      <div id="certificate" class="certificate-card theme-gold">
+        <div class="cert-title">شهادة شكر وتفدير</div>
+        <div class="cert-body">تمنح هذه الشهادة للتقديراً لجهوده المتميزة</div>
+        <div>
+          <span id="cert-name-display" class="cert-name">الأستاذ/ محمود السويدي</span>
+        </div>
+        <div class="cert-footer">
+          <div>التاريخ: <span id="cert-date">15 أكتوبر 2026</span></div>
+          <div>المُصدر: CertiMaker AI</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- زر توليد الصورة وحل مشكلة التنزيل -->
+    <button style="width: 100%; font-size: 16px; margin-top: 10px;" onclick="generateCertificateImage()">إنشاء الشهادة واستخراج الصورة 📸</button>
+
+    <!-- منطقة عرض الصورة المجهزة للحفظ بالضغط المطول -->
+    <div id="image-output-container">
+      <div class="instruction-text">👇 اضغط مطولاً على الصورة بالأسفل واختر "حفظ الصورة" (Save Image)</div>
+      <img id="final-cert-img" alt="الشهادة النهائية">
+    </div>
   </div>
 
   <script>
+    // 1. تهيئة Pi SDK عند فتح التطبيق
     window.onload = function() {
       if (window.Pi) {
         try {
-          window.Pi.init({ version: "2.0", sandbox: true });
+          window.Pi.init({ version: "2.0" });
+          document.getElementById('status').innerText = "تم الاتصال بشبكة Pi بنجاح";
         } catch(e) {
           console.error(e);
+          document.getElementById('status').innerText = "حدث خطأ أثناء الاتصال بـ Pi";
         }
+      } else {
+        document.getElementById('status').innerText = "يرجى فتح التطبيق من داخل Pi Browser";
       }
     };
 
-    function login() {
-      if (!window.Pi) {
-        alert("يرجى فتح الرابط من داخل تطبيق Pi Browser حصراً.");
-        return;
-      }
+    // 2. تحديث الاسم المكتوب في الشهادة
+    function updateName() {
+      const inputVal = document.getElementById('recipient-name').value;
+      document.getElementById('cert-name-display').innerText = inputVal || "اسم المستقبل";
+    }
 
-      document.getElementById('status').innerText = "جاري الاتصال بشبكة Pi...";
+    // 3. تغيير ثيم وألوان الشهادة
+    function setTheme(themeClass) {
+      const cert = document.getElementById('certificate');
+      // الحفاظ على حالة الدوران إن وجدت عند تغيير الثيم
+      const isSpinning = cert.classList.contains('spinning');
+      cert.className = 'certificate-card ' + themeClass + (isSpinning ? ' spinning' : '');
+    }
 
-      const scopes = ['username'];
-      function onIncompletePaymentFound(payment) {};
+    // 4. تشغيل وإيقاف الدوران 3D
+    function toggleSpin() {
+      const cert = document.getElementById('certificate');
+      cert.classList.toggle('spinning');
+    }
 
-      window.Pi.authenticate(scopes, onIncompletePaymentFound)
-        .then(function(auth) {
-          // إخفاء كارت الدخول وإظهار كارت التطبيق الرئيسي
-          document.getElementById('login-card').style.display = 'none';
-          document.getElementById('app-content').style.display = 'block';
-          document.getElementById('welcome-msg').innerText = "مرحباً بك يا " + auth.user.username + " 👋";
-        })
-        .catch(function(error) {
-          console.error(error);
-          document.getElementById('status').innerText = "حدث خطأ أثناء الدخول.";
-        });
+    // 5. حل مشكلة التحميل: تحويل الشهادة لصورة داخلية ومباشرة بدون نوافذ منبثقة
+    function generateCertificateImage() {
+      const cert = document.getElementById('certificate');
+      
+      // إيقاف الدوران المؤقت لالتقاط صورة صحيحة
+      const isSpinning = cert.classList.contains('spinning');
+      if (isSpinning) cert.classList.remove('spinning');
+
+      document.getElementById('status').innerText = "جاري تجهيز الصورة...";
+
+      // تحويل عنصر الشهادة إلى صورة باستخدام html2canvas
+      html2canvas(cert, { scale: 2 }).then(canvas => {
+        const imageDataUrl = canvas.toDataURL('image/png');
+        
+        // عرض الصورة داخل عنصر <img>
+        const imgElement = document.getElementById('final-cert-img');
+        imgElement.src = imageDataUrl;
+
+        // إظهار الحاوية
+        document.getElementById('image-output-container').style.display = 'block';
+        document.getElementById('status').innerText = "جاهزة للحفظ!";
+
+        // التمرير إلى الصورة المنتجة
+        document.getElementById('image-output-container').scrollIntoView({ behavior: 'smooth' });
+
+        // إعادة تشغيل الدوران إذا كان مفعلاً سابقاً
+        if (isSpinning) cert.classList.add('spinning');
+      }).catch(err => {
+        console.error(err);
+        alert("حدث خطأ أثناء استخراج صورة الشهادة");
+      });
     }
   </script>
 </body>
